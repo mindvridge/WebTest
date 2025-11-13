@@ -22,3 +22,9 @@ name = "preview"
 # Production environment configuration
 [[env.production]]
 name = "production"
+
+# D1 Database bindings
+[[d1_databases]]
+binding = "DB"
+database_name = "chefs-last-stand-db"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"

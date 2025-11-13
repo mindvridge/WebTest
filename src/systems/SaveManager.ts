@@ -1,30 +1,23 @@
 /**
  * SaveManager - Handles game progress saving and loading
- * Stores game state per user account
+ * Stores game state using backend API
  */
 
-import { UserManager } from './UserManager';
+import { ApiClient } from '../api/ApiClient';
 
 export interface GameSaveData {
-  username: string;
   savedAt: number;
-
-  // Game progress
   selectedCharacter: string;
   playerLevel: number;
   currentXP: number;
   requiredXP: number;
   killCount: number;
   gameTimer: number;
-
-  // Player stats
   playerHealth: number;
   playerMaxHealth: number;
   playerSpeed: number;
   playerDefense: number;
   playerDamageMultiplier: number;
-
-  // Weapons
   weapons: Array<{
     type: string;
     level: number;
@@ -32,77 +25,52 @@ export interface GameSaveData {
 }
 
 export class SaveManager {
-  private static readonly SAVE_KEY_PREFIX = 'chefs_last_stand_save_';
-
   /**
    * Save current game state
    */
-  static saveGame(gameData: GameSaveData): { success: boolean; message: string } {
-    const user = UserManager.getCurrentUser();
-    if (!user) {
-      return { success: false, message: '로그인이 필요합니다' };
+  static async saveGame(gameData: Omit<GameSaveData, 'savedAt'>): Promise<{ success: boolean; message: string }> {
+    const result = await ApiClient.saveGame(gameData);
+
+    if (result.success) {
+      return { success: true, message: result.message || '게임이 저장되었습니다' };
     }
 
-    const saveKey = this.SAVE_KEY_PREFIX + user.username;
-    const saveData: GameSaveData = {
-      ...gameData,
-      username: user.username,
-      savedAt: Date.now(),
-    };
-
-    try {
-      localStorage.setItem(saveKey, JSON.stringify(saveData));
-      return { success: true, message: '게임이 저장되었습니다' };
-    } catch (error) {
-      return { success: false, message: '저장 실패: 용량 부족' };
-    }
+    return { success: false, message: result.error || '저장 실패' };
   }
 
   /**
    * Load saved game state
    */
-  static loadGame(): GameSaveData | null {
-    const user = UserManager.getCurrentUser();
-    if (!user) return null;
+  static async loadGame(): Promise<GameSaveData | null> {
+    const result = await ApiClient.loadGame();
 
-    const saveKey = this.SAVE_KEY_PREFIX + user.username;
-    const saveDataStr = localStorage.getItem(saveKey);
-
-    if (!saveDataStr) return null;
-
-    try {
-      const saveData: GameSaveData = JSON.parse(saveDataStr);
-      // Verify the save belongs to current user
-      if (saveData.username !== user.username) return null;
-      return saveData;
-    } catch (error) {
-      return null;
+    if (result.success && result.save) {
+      return result.save;
     }
+
+    return null;
   }
 
   /**
-   * Check if a save exists for current user
+   * Check if a save exists
    */
-  static hasSavedGame(): boolean {
-    return this.loadGame() !== null;
+  static async hasSavedGame(): Promise<boolean> {
+    const save = await this.loadGame();
+    return save !== null;
   }
 
   /**
    * Delete saved game
    */
-  static deleteSave(): void {
-    const user = UserManager.getCurrentUser();
-    if (!user) return;
-
-    const saveKey = this.SAVE_KEY_PREFIX + user.username;
-    localStorage.removeItem(saveKey);
+  static async deleteSave(): Promise<void> {
+    await ApiClient.deleteSave();
   }
 
   /**
    * Get save info without loading full data
    */
-  static getSaveInfo(): { exists: boolean; savedAt?: number; character?: string } | null {
-    const saveData = this.loadGame();
+  static async getSaveInfo(): Promise<{ exists: boolean; savedAt?: number; character?: string } | null> {
+    const saveData = await this.loadGame();
     if (!saveData) {
       return { exists: false };
     }

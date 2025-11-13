@@ -157,7 +157,7 @@ export class LoginScene extends Phaser.Scene {
     this.usernameInput.focus();
   }
 
-  private handleSubmit() {
+  private async handleSubmit() {
     const username = this.usernameInput.value.trim();
     const password = this.passwordInput.value;
 
@@ -166,11 +166,14 @@ export class LoginScene extends Phaser.Scene {
       return;
     }
 
+    // Show loading message
+    this.showMessage('처리 중...', '#aaaaaa');
+
     let result;
     if (this.loginMode) {
-      result = UserManager.login(username, password);
+      result = await UserManager.login(username, password);
     } else {
-      result = UserManager.register(username, password);
+      result = await UserManager.register(username, password);
     }
 
     if (result.success) {
