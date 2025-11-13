@@ -6,6 +6,8 @@ export class LoginScene extends Phaser.Scene {
   private usernameInput!: HTMLInputElement;
   private passwordInput!: HTMLInputElement;
   private messageText!: Phaser.GameObjects.Text;
+  private modeToggleText!: Phaser.GameObjects.Text;
+  private submitButton!: HTMLButtonElement;
 
   constructor() {
     super('LoginScene');
@@ -44,15 +46,23 @@ export class LoginScene extends Phaser.Scene {
     this.createFormInputs(width, height);
 
     // Mode toggle text
-    const modeText = this.add.text(width / 2, height - 100, '', {
+    this.modeToggleText = this.add.text(width / 2, height - 100, '계정이 없으신가요? 회원가입', {
       fontSize: '16px',
-      color: '#aaaaaa',
+      color: '#ffaa00',
       fontFamily: 'Courier New',
     }).setOrigin(0.5).setInteractive();
 
-    modeText.on('pointerdown', () => {
+    this.modeToggleText.on('pointerdown', () => {
       this.loginMode = !this.loginMode;
       this.updateUI();
+    });
+
+    // Add hover effect
+    this.modeToggleText.on('pointerover', () => {
+      this.modeToggleText.setColor('#ffcc00');
+    });
+    this.modeToggleText.on('pointerout', () => {
+      this.modeToggleText.setColor('#ffaa00');
     });
 
     // Message text
@@ -116,26 +126,26 @@ export class LoginScene extends Phaser.Scene {
     this.passwordInput.style.borderRadius = '4px';
 
     // Submit button
-    const submitButton = document.createElement('button');
-    submitButton.textContent = 'LOGIN';
-    submitButton.style.width = '100%';
-    submitButton.style.padding = '12px';
-    submitButton.style.fontSize = '18px';
-    submitButton.style.fontFamily = 'Courier New';
-    submitButton.style.fontWeight = 'bold';
-    submitButton.style.backgroundColor = '#ffaa00';
-    submitButton.style.color = '#000000';
-    submitButton.style.border = 'none';
-    submitButton.style.borderRadius = '4px';
-    submitButton.style.cursor = 'pointer';
+    this.submitButton = document.createElement('button');
+    this.submitButton.textContent = '로그인';
+    this.submitButton.style.width = '100%';
+    this.submitButton.style.padding = '12px';
+    this.submitButton.style.fontSize = '18px';
+    this.submitButton.style.fontFamily = 'Courier New';
+    this.submitButton.style.fontWeight = 'bold';
+    this.submitButton.style.backgroundColor = '#ffaa00';
+    this.submitButton.style.color = '#000000';
+    this.submitButton.style.border = 'none';
+    this.submitButton.style.borderRadius = '4px';
+    this.submitButton.style.cursor = 'pointer';
 
-    submitButton.addEventListener('mouseenter', () => {
-      submitButton.style.backgroundColor = '#ffcc00';
+    this.submitButton.addEventListener('mouseenter', () => {
+      this.submitButton.style.backgroundColor = '#ffcc00';
     });
-    submitButton.addEventListener('mouseleave', () => {
-      submitButton.style.backgroundColor = '#ffaa00';
+    this.submitButton.addEventListener('mouseleave', () => {
+      this.submitButton.style.backgroundColor = '#ffaa00';
     });
-    submitButton.addEventListener('click', () => this.handleSubmit());
+    this.submitButton.addEventListener('click', () => this.handleSubmit());
 
     // Enter key support
     this.passwordInput.addEventListener('keypress', (e) => {
@@ -149,7 +159,7 @@ export class LoginScene extends Phaser.Scene {
     formContainer.appendChild(this.usernameInput);
     formContainer.appendChild(passwordLabel);
     formContainer.appendChild(this.passwordInput);
-    formContainer.appendChild(submitButton);
+    formContainer.appendChild(this.submitButton);
 
     document.body.appendChild(formContainer);
 
@@ -188,24 +198,12 @@ export class LoginScene extends Phaser.Scene {
   }
 
   private updateUI() {
-    const modeText = this.children.list.find((child) =>
-      child.type === 'Text' && (child as Phaser.GameObjects.Text).text.includes('계정')
-    ) as Phaser.GameObjects.Text;
-
-    if (modeText) {
-      if (this.loginMode) {
-        modeText.setText('계정이 없으신가요? 회원가입');
-        const button = document.querySelector('#login-form button');
-        if (button) {
-          button.textContent = '로그인';
-        }
-      } else {
-        modeText.setText('이미 계정이 있으신가요? 로그인');
-        const button = document.querySelector('#login-form button');
-        if (button) {
-          button.textContent = '회원가입';
-        }
-      }
+    if (this.loginMode) {
+      this.modeToggleText.setText('계정이 없으신가요? 회원가입');
+      this.submitButton.textContent = '로그인';
+    } else {
+      this.modeToggleText.setText('이미 계정이 있으신가요? 로그인');
+      this.submitButton.textContent = '회원가입';
     }
 
     this.messageText.setText('');
