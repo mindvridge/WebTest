@@ -110,6 +110,12 @@ export class Enemy extends Phaser.GameObjects.Graphics {
   }
 
   update(_time: number, delta: number) {
+    // Check if game is paused
+    const gameScene = this.scene as GameScene;
+    if ((gameScene as any).isPaused) {
+      return;
+    }
+
     // Move toward player
     if (this.player && this.body) {
       const angle = Phaser.Math.Angle.Between(this.x, this.y, this.player.x, this.player.y);

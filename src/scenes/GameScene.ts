@@ -67,20 +67,23 @@ export class GameScene extends Phaser.Scene {
   async create() {
     const { width, height } = this.cameras.main;
 
-    // Create ground/background
-    const bg = this.add.graphics();
-    bg.fillStyle(0x4a4a4a, 1);
-    bg.fillRect(0, 0, width * 3, height * 3);
-    bg.setScrollFactor(0.5);
+    // Create infinite repeating background using TileSprite
+    const tileSize = 64;
+    const bg = this.add.tileSprite(0, 0, width * 2, height * 2, '');
+    bg.setOrigin(0, 0);
 
-    // Create grid pattern for restaurant floor
-    bg.lineStyle(2, 0x3a3a3a, 0.5);
-    for (let x = 0; x < width * 3; x += 64) {
-      bg.lineBetween(x, 0, x, height * 3);
-    }
-    for (let y = 0; y < height * 3; y += 64) {
-      bg.lineBetween(0, y, width * 3, y);
-    }
+    // Draw tile pattern manually
+    const graphics = this.make.graphics({ x: 0, y: 0 });
+    graphics.fillStyle(0x4a4a4a, 1);
+    graphics.fillRect(0, 0, tileSize, tileSize);
+    graphics.lineStyle(2, 0x3a3a3a, 0.5);
+    graphics.strokeRect(0, 0, tileSize, tileSize);
+    graphics.generateTexture('floor-tile', tileSize, tileSize);
+    graphics.destroy();
+
+    // Set the tile sprite to use the generated texture
+    bg.setTexture('floor-tile');
+    bg.setScrollFactor(1);
 
     // Initialize player
     const charStats = CHARACTER_STATS[this.selectedCharacter as keyof typeof CHARACTER_STATS];
@@ -100,10 +103,12 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Camera follows player
+    // Camera follows player - no bounds for infinite map
     this.cameras.main.startFollow(this.player);
     this.cameras.main.setZoom(1);
-    this.cameras.main.setBounds(0, 0, width * 3, height * 3);
+
+    // Store background reference for updating in update loop
+    (this as any).backgroundTile = bg;
 
     // Initialize groups
     this.enemies = this.add.group({
@@ -141,6 +146,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number) {
+    // Update infinite background position
+    const bg = (this as any).backgroundTile;
+    if (bg) {
+      bg.setPosition(this.player.x - this.cameras.main.width / 2, this.player.y - this.cameras.main.height / 2);
+      bg.tilePositionX = this.player.x;
+      bg.tilePositionY = this.player.y;
+    }
+
     if (this.isPaused) return;
 
     // Update game timer
@@ -165,9 +178,12 @@ export class GameScene extends Phaser.Scene {
     // Player movement
     this.handlePlayerMovement();
 
-    // Spawn enemies
+    // Spawn enemies with dynamic spawn rate based on time
+    const minutes = this.gameTimer / 60000;
+    const currentSpawnInterval = ENEMY_CONFIG.spawnInterval * Math.pow(ENEMY_CONFIG.spawnRateScaling, minutes);
+
     this.enemySpawnTimer += delta;
-    if (this.enemySpawnTimer >= ENEMY_CONFIG.spawnInterval) {
+    if (this.enemySpawnTimer >= currentSpawnInterval) {
       this.spawnEnemy();
       this.enemySpawnTimer = 0;
     }
@@ -236,28 +252,53 @@ export class GameScene extends Phaser.Scene {
     const x = this.player.x + Math.cos(angle) * spawnDistance;
     const y = this.player.y + Math.sin(angle) * spawnDistance;
 
-    // Determine enemy type based on game time
+    // Determine enemy type based on game time - more aggressive difficulty curve
     let enemyType = 'normal';
     const minutes = this.gameTimer / 60000;
 
-    if (minutes > 20) {
+    if (minutes > 15) {
+      // Late game: mix of all enemy types with high chance of tougher enemies
       const rand = Math.random();
-      if (rand < 0.2) enemyType = 'foodCritic';
+      if (rand < 0.25) enemyType = 'foodCritic';
+      else if (rand < 0.45) enemyType = 'karen';
+      else if (rand < 0.65) enemyType = 'hungry';
+      else if (rand < 0.85) enemyType = 'influencer';
+      else enemyType = 'normal';
+    } else if (minutes > 8) {
+      // Mid-late game: introduce food critics earlier
+      const rand = Math.random();
+      if (rand < 0.15) enemyType = 'foodCritic';
       else if (rand < 0.4) enemyType = 'karen';
-      else if (rand < 0.6) enemyType = 'hungry';
-      else if (rand < 0.8) enemyType = 'influencer';
-    } else if (minutes > 10) {
+      else if (rand < 0.65) enemyType = 'hungry';
+      else if (rand < 0.85) enemyType = 'influencer';
+      else enemyType = 'normal';
+    } else if (minutes > 3) {
+      // Early-mid game: tougher enemies appear sooner
       const rand = Math.random();
-      if (rand < 0.3) enemyType = 'karen';
+      if (rand < 0.25) enemyType = 'karen';
       else if (rand < 0.5) enemyType = 'hungry';
-      else if (rand < 0.7) enemyType = 'influencer';
-    } else if (minutes > 5) {
+      else if (rand < 0.75) enemyType = 'influencer';
+      else enemyType = 'normal';
+    } else if (minutes > 1) {
+      // Very early game: still introduce variety quickly
       const rand = Math.random();
       if (rand < 0.4) enemyType = 'hungry';
       else if (rand < 0.7) enemyType = 'influencer';
+      else enemyType = 'normal';
     }
 
     const enemy = new Enemy(this, x, y, enemyType, this.player);
+
+    // Apply difficulty scaling based on time
+    const healthMultiplier = Math.pow(ENEMY_CONFIG.healthScaling, minutes);
+    const damageMultiplier = Math.pow(ENEMY_CONFIG.damageScaling, minutes);
+    const speedMultiplier = Math.pow(ENEMY_CONFIG.speedScaling, minutes);
+
+    enemy.health = Math.floor(enemy.health * healthMultiplier);
+    enemy.maxHealth = Math.floor(enemy.maxHealth * healthMultiplier);
+    enemy.damage = Math.floor(enemy.damage * damageMultiplier);
+    enemy.speed = Math.floor(enemy.speed * speedMultiplier);
+
     this.enemies.add(enemy);
   }
 
@@ -293,6 +334,17 @@ export class GameScene extends Phaser.Scene {
 
     // Show level up screen
     this.isPaused = true;
+
+    // Stop player movement
+    this.player.setVelocity(0, 0);
+
+    // Stop all enemy movement
+    this.enemies.getChildren().forEach((enemy: any) => {
+      if (enemy.body) {
+        enemy.body.setVelocity(0, 0);
+      }
+    });
+
     const weaponChoices = this.generateWeaponChoices();
     uiScene.showLevelUp(weaponChoices, (index: number) => {
       this.applyWeaponChoice(weaponChoices[index]);

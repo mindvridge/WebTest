@@ -31,7 +31,7 @@ export class Player extends Phaser.GameObjects.Graphics {
     scene.physics.world.enable(this);
     this.body.setSize(32, 32);
     this.body.setOffset(-16, -16);
-    this.body.setCollideWorldBounds(true);
+    // Infinite map - no world bounds
   }
 
   private drawPlayer() {

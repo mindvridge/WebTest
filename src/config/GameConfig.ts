@@ -15,9 +15,14 @@ export const PLAYER_CONFIG = {
 };
 
 export const ENEMY_CONFIG = {
-  spawnInterval: 2000, // 2 seconds
-  maxEnemies: 200,
-  spawnDistance: 400
+  spawnInterval: 1200, // 1.2 seconds (faster spawning)
+  maxEnemies: 300, // More enemies on screen
+  spawnDistance: 400,
+  // Difficulty scaling
+  healthScaling: 1.08, // 8% health increase per minute
+  damageScaling: 1.05, // 5% damage increase per minute
+  speedScaling: 1.03, // 3% speed increase per minute
+  spawnRateScaling: 0.95 // Spawn 5% faster each minute (multiplier decreases interval)
 };
 
 export const WEAPON_CONFIG = {
@@ -138,49 +143,49 @@ export const CHARACTER_STATS = {
 export const ENEMY_TYPES = {
   normal: {
     name: 'Normal Customer',
-    health: 20,
-    speed: 50,
-    damage: 10,
+    health: 30, // Increased from 20
+    speed: 60, // Increased from 50
+    damage: 12, // Increased from 10
     xp: 1,
     color: 0x00ff00
   },
   hungry: {
     name: 'Hungry Customer',
-    health: 15,
-    speed: 80,
-    damage: 8,
+    health: 25, // Increased from 15
+    speed: 90, // Increased from 80
+    damage: 10, // Increased from 8
     xp: 2,
     color: 0xffff00
   },
   karen: {
     name: 'Karen',
-    health: 50,
-    speed: 40,
-    damage: 15,
+    health: 70, // Increased from 50
+    speed: 50, // Increased from 40
+    damage: 20, // Increased from 15
     xp: 5,
     color: 0xff00ff
   },
   influencer: {
     name: 'Influencer',
-    health: 10,
-    speed: 90,
-    damage: 5,
+    health: 18, // Increased from 10
+    speed: 100, // Increased from 90
+    damage: 8, // Increased from 5
     xp: 3,
     color: 0x00ffff
   },
   foodCritic: {
     name: 'Food Critic',
-    health: 100,
-    speed: 30,
-    damage: 25,
+    health: 150, // Increased from 100
+    speed: 40, // Increased from 30
+    damage: 35, // Increased from 25
     xp: 10,
     color: 0xff0000
   },
   boss: {
     name: 'Angry Manager',
-    health: 1000,
-    speed: 60,
-    damage: 30,
+    health: 1500, // Increased from 1000
+    speed: 70, // Increased from 60
+    damage: 40, // Increased from 30
     xp: 100,
     color: 0xff4400
   }
