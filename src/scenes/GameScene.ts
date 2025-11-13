@@ -4,6 +4,9 @@ import { Player } from '../entities/Player';
 import { Enemy } from '../entities/Enemy';
 import { Weapon } from '../entities/Weapon';
 import { XPGem } from '../entities/XPGem';
+import { SaveManager, GameSaveData } from '../systems/SaveManager';
+import { UserManager } from '../systems/UserManager';
+import { AchievementManager } from '../systems/AchievementManager';
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -21,15 +24,44 @@ export class GameScene extends Phaser.Scene {
   private enemySpawnTimer: number = 0;
   private gameTimer: number = 0;
   private isPaused: boolean = false;
+  private autoSaveTimer: number = 0;
+  private readonly autoSaveInterval: number = 30000; // 30 seconds
 
   private selectedCharacter!: string;
+  private loadedFromSave: boolean = false;
 
   constructor() {
     super('GameScene');
   }
 
-  init(data: { character: string }) {
-    this.selectedCharacter = data.character || 'rookie';
+  init(data: { character?: string; loadSave?: boolean }) {
+    // Check if loading from save
+    if (data.loadSave) {
+      const saveData = SaveManager.loadGame();
+      if (saveData) {
+        this.loadedFromSave = true;
+        this.loadGameState(saveData);
+        return;
+      }
+    }
+
+    // New game
+    this.selectedCharacter = data.character || 'rookie_cook';
+    this.playerLevel = 1;
+    this.currentXP = 0;
+    this.requiredXP = XP_CONFIG.levelUpBase;
+    this.killCount = 0;
+    this.gameTimer = 0;
+    this.loadedFromSave = false;
+  }
+
+  private loadGameState(saveData: GameSaveData) {
+    this.selectedCharacter = saveData.selectedCharacter;
+    this.playerLevel = saveData.playerLevel;
+    this.currentXP = saveData.currentXP;
+    this.requiredXP = saveData.requiredXP;
+    this.killCount = saveData.killCount;
+    this.gameTimer = saveData.gameTimer;
   }
 
   create() {
@@ -55,6 +87,18 @@ export class GameScene extends Phaser.Scene {
     this.player = new Player(this, width / 2, height / 2, charStats);
     this.add.existing(this.player);
     this.physics.add.existing(this.player);
+
+    // Restore player state if loading from save
+    if (this.loadedFromSave) {
+      const saveData = SaveManager.loadGame();
+      if (saveData) {
+        this.player.health = saveData.playerHealth;
+        this.player.maxHealth = saveData.playerMaxHealth;
+        this.player.speed = saveData.playerSpeed;
+        this.player.defense = saveData.playerDefense;
+        this.player.damageMultiplier = saveData.playerDamageMultiplier;
+      }
+    }
 
     // Camera follows player
     this.cameras.main.startFollow(this.player);
@@ -111,6 +155,13 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    // Auto-save progress
+    this.autoSaveTimer += delta;
+    if (this.autoSaveTimer >= this.autoSaveInterval) {
+      this.autoSave();
+      this.autoSaveTimer = 0;
+    }
+
     // Player movement
     this.handlePlayerMovement();
 
@@ -128,6 +179,27 @@ export class GameScene extends Phaser.Scene {
     if (this.player.health <= 0) {
       this.gameOver();
     }
+  }
+
+  private autoSave() {
+    const saveData: GameSaveData = {
+      username: UserManager.getCurrentUser()?.username || '',
+      savedAt: Date.now(),
+      selectedCharacter: this.selectedCharacter,
+      playerLevel: this.playerLevel,
+      currentXP: this.currentXP,
+      requiredXP: this.requiredXP,
+      killCount: this.killCount,
+      gameTimer: this.gameTimer,
+      playerHealth: this.player.health,
+      playerMaxHealth: this.player.maxHealth,
+      playerSpeed: this.player.speed,
+      playerDefense: this.player.defense,
+      playerDamageMultiplier: this.player.damageMultiplier,
+      weapons: this.weapons.map(w => ({ type: w.type, level: 1 })),
+    };
+
+    SaveManager.saveGame(saveData);
   }
 
   private handlePlayerMovement() {
@@ -283,6 +355,12 @@ export class GameScene extends Phaser.Scene {
     this.isPaused = true;
     const { width, height } = this.cameras.main;
 
+    // Update user statistics
+    this.updateUserStatistics(false);
+
+    // Delete save (game ended)
+    SaveManager.deleteSave();
+
     this.add.text(width / 2, height / 2, 'GAME OVER', {
       fontSize: '64px',
       color: '#ff0000',
@@ -291,7 +369,7 @@ export class GameScene extends Phaser.Scene {
       padding: { x: 20, y: 10 }
     }).setOrigin(0.5).setScrollFactor(0);
 
-    this.add.text(width / 2, height / 2 + 80, `Survived: ${Math.floor(this.gameTimer / 1000)}s\nKills: ${this.killCount}`, {
+    this.add.text(width / 2, height / 2 + 80, `생존 시간: ${UserManager.formatTime(this.gameTimer)}\n처치 수: ${this.killCount}\n레벨: ${this.playerLevel}`, {
       fontSize: '24px',
       color: '#ffffff',
       fontFamily: 'Courier New',
@@ -299,6 +377,18 @@ export class GameScene extends Phaser.Scene {
       padding: { x: 15, y: 8 },
       align: 'center'
     }).setOrigin(0.5).setScrollFactor(0);
+
+    // Check for new achievements
+    const newAchievements = AchievementManager.checkAchievements();
+    if (newAchievements.length > 0) {
+      this.add.text(width / 2, height / 2 + 180, `새로운 업적 달성: ${newAchievements.length}개!`, {
+        fontSize: '18px',
+        color: '#ffdd00',
+        fontFamily: 'Courier New',
+        backgroundColor: '#000000',
+        padding: { x: 10, y: 5 },
+      }).setOrigin(0.5).setScrollFactor(0);
+    }
 
     this.time.delayedCall(3000, () => {
       this.scene.stop('UIScene');
@@ -310,6 +400,12 @@ export class GameScene extends Phaser.Scene {
     this.isPaused = true;
     const { width, height } = this.cameras.main;
 
+    // Update user statistics
+    this.updateUserStatistics(true);
+
+    // Delete save (game ended)
+    SaveManager.deleteSave();
+
     this.add.text(width / 2, height / 2, 'SHIFT COMPLETE!', {
       fontSize: '64px',
       color: '#00ff00',
@@ -318,7 +414,7 @@ export class GameScene extends Phaser.Scene {
       padding: { x: 20, y: 10 }
     }).setOrigin(0.5).setScrollFactor(0);
 
-    this.add.text(width / 2, height / 2 + 80, `YOU SURVIVED!\nKills: ${this.killCount}`, {
+    this.add.text(width / 2, height / 2 + 80, `생존 성공!\n처치 수: ${this.killCount}\n레벨: ${this.playerLevel}`, {
       fontSize: '24px',
       color: '#ffffff',
       fontFamily: 'Courier New',
@@ -327,9 +423,35 @@ export class GameScene extends Phaser.Scene {
       align: 'center'
     }).setOrigin(0.5).setScrollFactor(0);
 
+    // Check for new achievements
+    const newAchievements = AchievementManager.checkAchievements();
+    if (newAchievements.length > 0) {
+      this.add.text(width / 2, height / 2 + 180, `새로운 업적 달성: ${newAchievements.length}개!`, {
+        fontSize: '18px',
+        color: '#ffdd00',
+        fontFamily: 'Courier New',
+        backgroundColor: '#000000',
+        padding: { x: 10, y: 5 },
+      }).setOrigin(0.5).setScrollFactor(0);
+    }
+
     this.time.delayedCall(5000, () => {
       this.scene.stop('UIScene');
       this.scene.start('MenuScene');
     });
+  }
+
+  private updateUserStatistics(_won: boolean) {
+    // Update playtime
+    UserManager.updatePlaytime(this.gameTimer);
+
+    // Update kills
+    UserManager.updateKills(this.killCount);
+
+    // Update high scores
+    UserManager.updateHighScores(this.gameTimer, this.playerLevel, this.killCount);
+
+    // Check for character unlocks
+    AchievementManager.checkCharacterUnlocks();
   }
 }

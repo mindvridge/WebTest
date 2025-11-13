@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { GAME_CONFIG } from './config/GameConfig';
-import { GameScene } from './scenes/GameScene';
+import { LoginScene } from './scenes/LoginScene';
 import { MenuScene } from './scenes/MenuScene';
+import { GameScene } from './scenes/GameScene';
 import { UIScene } from './scenes/UIScene';
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -17,7 +18,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false
     }
   },
-  scene: [MenuScene, GameScene, UIScene],
+  scene: [LoginScene, MenuScene, GameScene, UIScene],
   fps: {
     target: GAME_CONFIG.targetFPS,
     forceSetTimeOut: true
