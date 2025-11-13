@@ -103,8 +103,8 @@ export class AchievementManager {
   /**
    * Check and unlock achievements based on current stats
    */
-  static checkAchievements(): string[] {
-    const user = UserManager.getCurrentUser();
+  static async checkAchievements(): Promise<string[]> {
+    const user = await UserManager.getCurrentUser();
     if (!user) return [];
 
     const newAchievements: string[] = [];
@@ -122,7 +122,7 @@ export class AchievementManager {
 
       // Check if requirement is met
       if (achievement.requirement(stats)) {
-        UserManager.addAchievement(achievement.id);
+        await UserManager.addAchievement(achievement.id);
         newAchievements.push(achievement.id);
       }
     }
@@ -147,8 +147,8 @@ export class AchievementManager {
   /**
    * Get unlocked achievements for current user
    */
-  static getUnlockedAchievements(): Achievement[] {
-    const user = UserManager.getCurrentUser();
+  static async getUnlockedAchievements(): Promise<Achievement[]> {
+    const user = await UserManager.getCurrentUser();
     if (!user) return [];
 
     return this.ACHIEVEMENTS.filter((a) => user.achievements.includes(a.id));
@@ -157,8 +157,8 @@ export class AchievementManager {
   /**
    * Get locked achievements for current user
    */
-  static getLockedAchievements(): Achievement[] {
-    const user = UserManager.getCurrentUser();
+  static async getLockedAchievements(): Promise<Achievement[]> {
+    const user = await UserManager.getCurrentUser();
     if (!user) return this.ACHIEVEMENTS;
 
     return this.ACHIEVEMENTS.filter((a) => !user.achievements.includes(a.id));
@@ -167,8 +167,8 @@ export class AchievementManager {
   /**
    * Get achievement progress percentage
    */
-  static getProgress(): number {
-    const user = UserManager.getCurrentUser();
+  static async getProgress(): Promise<number> {
+    const user = await UserManager.getCurrentUser();
     if (!user) return 0;
 
     return Math.floor((user.achievements.length / this.ACHIEVEMENTS.length) * 100);
@@ -177,31 +177,31 @@ export class AchievementManager {
   /**
    * Check for character unlocks based on achievements
    */
-  static checkCharacterUnlocks(): void {
-    const user = UserManager.getCurrentUser();
+  static async checkCharacterUnlocks(): Promise<void> {
+    const user = await UserManager.getCurrentUser();
     if (!user) return;
 
     // Unlock characters based on achievements
     if (user.achievements.includes('survivor')) {
-      UserManager.unlockCharacter('line_cook');
+      await UserManager.unlockCharacter('lineChef');
     }
     if (user.achievements.includes('veteran')) {
-      UserManager.unlockCharacter('sous_chef');
+      await UserManager.unlockCharacter('sousChef');
     }
     if (user.achievements.includes('master_chef')) {
-      UserManager.unlockCharacter('head_chef');
+      await UserManager.unlockCharacter('headChef');
     }
     if (user.achievements.includes('killer')) {
-      UserManager.unlockCharacter('fry_cook');
+      await UserManager.unlockCharacter('fryChef');
     }
     if (user.achievements.includes('massacre')) {
-      UserManager.unlockCharacter('pastry_chef');
+      await UserManager.unlockCharacter('pastryChef');
     }
     if (user.achievements.includes('genocide')) {
-      UserManager.unlockCharacter('grill_master');
+      await UserManager.unlockCharacter('grillMaster');
     }
     if (user.achievements.includes('power_overwhelming')) {
-      UserManager.unlockCharacter('executive_chef');
+      await UserManager.unlockCharacter('sushiChef');
     }
   }
 }

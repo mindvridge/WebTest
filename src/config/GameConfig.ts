@@ -1,10 +1,10 @@
 // Game Configuration based on Chef's Last Stand GDD
 
 export const GAME_CONFIG = {
-  width: 1280,
-  height: 720,
+  width: Math.min(1280, window.innerWidth),
+  height: Math.min(720, window.innerHeight),
   targetFPS: 60,
-  backgroundColor: '#2c2c2c'
+  backgroundColor: '#1a1a2e'
 };
 
 export const PLAYER_CONFIG = {
@@ -70,7 +70,7 @@ export const WEAPON_CONFIG = {
 
 export const CHARACTER_STATS = {
   rookie: {
-    name: 'Rookie Chef',
+    name: '🍳 신입 셰프',
     health: 100,
     speed: 150,
     damage: 1.0,
@@ -78,7 +78,7 @@ export const CHARACTER_STATS = {
     startWeapon: 'hamburger'
   },
   grillMaster: {
-    name: 'Grill Master',
+    name: '🔥 그릴 마스터',
     health: 120,
     speed: 140,
     damage: 1.2,
@@ -86,7 +86,7 @@ export const CHARACTER_STATS = {
     startWeapon: 'hamburger'
   },
   pastryChef: {
-    name: 'Pastry Chef',
+    name: '🧁 제과 셰프',
     health: 90,
     speed: 160,
     damage: 0.9,
@@ -94,7 +94,7 @@ export const CHARACTER_STATS = {
     startWeapon: 'iceCreamScoop'
   },
   sushiChef: {
-    name: 'Sushi Chef',
+    name: '🍣 스시 셰프',
     health: 95,
     speed: 170,
     damage: 1.1,
@@ -102,7 +102,7 @@ export const CHARACTER_STATS = {
     startWeapon: 'pizzaCutter'
   },
   headChef: {
-    name: 'Head Chef',
+    name: '👨‍🍳 수석 셰프',
     health: 130,
     speed: 130,
     damage: 1.15,
@@ -110,7 +110,7 @@ export const CHARACTER_STATS = {
     startWeapon: 'hamburger'
   },
   lineChef: {
-    name: 'Line Chef',
+    name: '⚡ 라인 셰프',
     health: 110,
     speed: 155,
     damage: 1.05,
@@ -118,7 +118,7 @@ export const CHARACTER_STATS = {
     startWeapon: 'coffeeMachine'
   },
   sousChef: {
-    name: 'Sous Chef',
+    name: '🎖️ 수셰프',
     health: 105,
     speed: 145,
     damage: 1.1,
@@ -126,7 +126,7 @@ export const CHARACTER_STATS = {
     startWeapon: 'sodaFountain'
   },
   fryChef: {
-    name: 'Fry Chef',
+    name: '🍟 튀김 셰프',
     health: 115,
     speed: 135,
     damage: 1.25,

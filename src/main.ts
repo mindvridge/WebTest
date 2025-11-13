@@ -25,7 +25,25 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   scale: {
     mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: GAME_CONFIG.width,
+    height: GAME_CONFIG.height,
+    min: {
+      width: 320,
+      height: 180
+    },
+    max: {
+      width: 1920,
+      height: 1080
+    }
+  },
+  dom: {
+    createContainer: true
+  },
+  render: {
+    antialias: true,
+    pixelArt: false,
+    roundPixels: true
   }
 };
 

@@ -71,7 +71,7 @@ export class UserManager {
    */
   static logout(): void {
     this.currentUser = null;
-    ApiClient.clearToken();
+    ApiClient.clearCurrentUser();
   }
 
   /**
@@ -93,9 +93,9 @@ export class UserManager {
       return this.currentUser;
     }
 
-    // Try to load from backend using stored token
-    const token = ApiClient.getToken();
-    if (token) {
+    // Try to load from localStorage using stored username
+    const username = ApiClient.getCurrentUsername();
+    if (username) {
       await this.loadUserProfile();
       return this.currentUser;
     }
@@ -114,7 +114,7 @@ export class UserManager {
    * Check if user is logged in
    */
   static isLoggedIn(): boolean {
-    return ApiClient.getToken() !== null;
+    return ApiClient.getCurrentUsername() !== null;
   }
 
   /**

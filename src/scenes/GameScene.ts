@@ -34,10 +34,10 @@ export class GameScene extends Phaser.Scene {
     super('GameScene');
   }
 
-  init(data: { character?: string; loadSave?: boolean }) {
+  async init(data: { character?: string; loadSave?: boolean }) {
     // Check if loading from save
     if (data.loadSave) {
-      const saveData = SaveManager.loadGame();
+      const saveData = await SaveManager.loadGame();
       if (saveData) {
         this.loadedFromSave = true;
         this.loadGameState(saveData);
@@ -46,7 +46,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // New game
-    this.selectedCharacter = data.character || 'rookie_cook';
+    this.selectedCharacter = data.character || 'rookie';
     this.playerLevel = 1;
     this.currentXP = 0;
     this.requiredXP = XP_CONFIG.levelUpBase;
@@ -64,7 +64,7 @@ export class GameScene extends Phaser.Scene {
     this.gameTimer = saveData.gameTimer;
   }
 
-  create() {
+  async create() {
     const { width, height } = this.cameras.main;
 
     // Create ground/background
@@ -90,7 +90,7 @@ export class GameScene extends Phaser.Scene {
 
     // Restore player state if loading from save
     if (this.loadedFromSave) {
-      const saveData = SaveManager.loadGame();
+      const saveData = await SaveManager.loadGame();
       if (saveData) {
         this.player.health = saveData.playerHealth;
         this.player.maxHealth = saveData.playerMaxHealth;
@@ -182,9 +182,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private autoSave() {
-    const saveData: GameSaveData = {
-      username: UserManager.getCurrentUser()?.username || '',
-      savedAt: Date.now(),
+    const saveData = {
       selectedCharacter: this.selectedCharacter,
       playerLevel: this.playerLevel,
       currentXP: this.currentXP,
@@ -351,15 +349,15 @@ export class GameScene extends Phaser.Scene {
     this.xpGems.add(xpGem);
   }
 
-  private gameOver() {
+  private async gameOver() {
     this.isPaused = true;
     const { width, height } = this.cameras.main;
 
     // Update user statistics
-    this.updateUserStatistics(false);
+    await this.updateUserStatistics(false);
 
     // Delete save (game ended)
-    SaveManager.deleteSave();
+    await SaveManager.deleteSave();
 
     this.add.text(width / 2, height / 2, 'GAME OVER', {
       fontSize: '64px',
@@ -379,7 +377,7 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0);
 
     // Check for new achievements
-    const newAchievements = AchievementManager.checkAchievements();
+    const newAchievements = await AchievementManager.checkAchievements();
     if (newAchievements.length > 0) {
       this.add.text(width / 2, height / 2 + 180, `새로운 업적 달성: ${newAchievements.length}개!`, {
         fontSize: '18px',
@@ -396,15 +394,15 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private gameWin() {
+  private async gameWin() {
     this.isPaused = true;
     const { width, height } = this.cameras.main;
 
     // Update user statistics
-    this.updateUserStatistics(true);
+    await this.updateUserStatistics(true);
 
     // Delete save (game ended)
-    SaveManager.deleteSave();
+    await SaveManager.deleteSave();
 
     this.add.text(width / 2, height / 2, 'SHIFT COMPLETE!', {
       fontSize: '64px',
@@ -424,7 +422,7 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0);
 
     // Check for new achievements
-    const newAchievements = AchievementManager.checkAchievements();
+    const newAchievements = await AchievementManager.checkAchievements();
     if (newAchievements.length > 0) {
       this.add.text(width / 2, height / 2 + 180, `새로운 업적 달성: ${newAchievements.length}개!`, {
         fontSize: '18px',
@@ -441,17 +439,17 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private updateUserStatistics(_won: boolean) {
+  private async updateUserStatistics(_won: boolean) {
     // Update playtime
-    UserManager.updatePlaytime(this.gameTimer);
+    await UserManager.updatePlaytime(this.gameTimer);
 
     // Update kills
-    UserManager.updateKills(this.killCount);
+    await UserManager.updateKills(this.killCount);
 
     // Update high scores
-    UserManager.updateHighScores(this.gameTimer, this.playerLevel, this.killCount);
+    await UserManager.updateHighScores(this.gameTimer, this.playerLevel, this.killCount);
 
     // Check for character unlocks
-    AchievementManager.checkCharacterUnlocks();
+    await AchievementManager.checkCharacterUnlocks();
   }
 }

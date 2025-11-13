@@ -5,13 +5,13 @@ import { SaveManager } from '../systems/SaveManager';
 import { AchievementManager } from '../systems/AchievementManager';
 
 export class MenuScene extends Phaser.Scene {
-  private selectedCharacter: string = 'rookie_cook';
+  private selectedCharacter: string = 'rookie';
 
   constructor() {
     super('MenuScene');
   }
 
-  create() {
+  async create() {
     const { width, height } = this.cameras.main;
 
     // Check if user is logged in (redirect if not)
@@ -20,7 +20,11 @@ export class MenuScene extends Phaser.Scene {
       return;
     }
 
-    const user = UserManager.getCurrentUser()!;
+    const user = await UserManager.getCurrentUser();
+    if (!user) {
+      this.scene.start('LoginScene');
+      return;
+    }
 
     // Background
     const bg = this.add.graphics();
@@ -77,7 +81,7 @@ export class MenuScene extends Phaser.Scene {
 
     // Continue button (if save exists)
     let yOffset = 140;
-    const saveInfo = SaveManager.getSaveInfo();
+    const saveInfo = await SaveManager.getSaveInfo();
     if (saveInfo?.exists) {
       const continueButton = this.add.text(width / 2, yOffset, '계속하기', {
         fontSize: '28px',
@@ -187,12 +191,12 @@ export class MenuScene extends Phaser.Scene {
       startButton.setScale(1);
     });
 
-    startButton.on('pointerdown', () => {
+    startButton.on('pointerdown', async () => {
       // Confirm if there's a saved game
       if (saveInfo?.exists) {
         const confirmDelete = confirm('저장된 게임이 삭제됩니다. 계속하시겠습니까?');
         if (!confirmDelete) return;
-        SaveManager.deleteSave();
+        await SaveManager.deleteSave();
       }
 
       this.scene.start('GameScene', { character: this.selectedCharacter });
@@ -228,7 +232,7 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
-  private showAchievements() {
+  private async showAchievements() {
     const { width, height } = this.cameras.main;
 
     // Create overlay
@@ -248,7 +252,8 @@ export class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(1001);
 
     const allAchievements = AchievementManager.getAllAchievements();
-    const user = UserManager.getCurrentUser()!;
+    const user = await UserManager.getCurrentUser();
+    if (!user) return;
 
     let yPos = 140;
     const achievementTexts: Phaser.GameObjects.Text[] = [];
