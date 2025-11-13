@@ -77,6 +77,37 @@ This game is based on comprehensive design documents including:
 - Visual Style Guide
 - Detailed Korean Design Specifications
 
+## Deployment
+
+This game is optimized for **Cloudflare Pages** deployment:
+
+- **Free unlimited bandwidth**
+- **Global CDN** for fast worldwide performance
+- **Automatic deployments** from Git
+- **Free SSL** and analytics included
+
+### Quick Deploy to Cloudflare Pages
+
+1. Push this repository to GitHub/GitLab
+2. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/) → Pages
+3. Connect your repository
+4. Use these settings:
+   - **Build command**: `npm run build`
+   - **Build output directory**: `dist`
+   - **Node version**: `20`
+5. Click "Save and Deploy"
+
+Your game will be live in ~3 minutes at `https://chefs-last-stand.pages.dev`
+
+📖 **Full deployment guide**: See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions, CLI deployment, GitHub Actions, and troubleshooting.
+
+### Alternative Hosting Options
+
+- **Netlify**: 100GB bandwidth/month free
+- **Vercel**: Good for Next.js (requires Pro for commercial)
+- **GitHub Pages**: Simple but slower performance
+- **itch.io**: Game community platform with built-in monetization
+
 ## License
 
 This project is created based on the Chef's Last Stand game design documents.

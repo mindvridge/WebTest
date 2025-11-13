@@ -1,0 +1,24 @@
+name = "chefs-last-stand"
+compatibility_date = "2025-01-01"
+
+[site]
+bucket = "./dist"
+
+# Pages configuration
+pages_build_output_dir = "./dist"
+
+# Build configuration
+[build]
+command = "npm run build"
+
+# Build environment variables
+[build.environment_variables]
+NODE_VERSION = "20"
+
+# Preview environment configuration
+[[env.preview]]
+name = "preview"
+
+# Production environment configuration
+[[env.production]]
+name = "production"
