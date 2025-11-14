@@ -18,7 +18,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false
     }
   },
-  scene: [LoginScene, MenuScene, GameScene, UIScene],
+  scene: [MenuScene, LoginScene, GameScene, UIScene],
   fps: {
     target: GAME_CONFIG.targetFPS,
     forceSetTimeOut: true

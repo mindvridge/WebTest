@@ -14,16 +14,20 @@ export class MenuScene extends Phaser.Scene {
   async create() {
     const { width, height } = this.cameras.main;
 
-    // Check if user is logged in (redirect if not)
+    // Auto-login as guest for local play
     if (!UserManager.isLoggedIn()) {
-      this.scene.start('LoginScene');
-      return;
+      await UserManager.autoLoginAsGuest();
     }
 
-    const user = await UserManager.getCurrentUser();
+    let user = await UserManager.getCurrentUser();
     if (!user) {
-      this.scene.start('LoginScene');
-      return;
+      // Fallback: create guest user if still not logged in
+      await UserManager.autoLoginAsGuest();
+      user = await UserManager.getCurrentUser();
+      if (!user) {
+        console.error('Failed to create guest user');
+        return;
+      }
     }
 
     // Background

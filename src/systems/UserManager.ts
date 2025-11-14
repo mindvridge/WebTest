@@ -29,6 +29,40 @@ export class UserManager {
   private static currentUser: UserProfile | null = null;
 
   /**
+   * Auto-login as guest user (for local play without registration)
+   */
+  static async autoLoginAsGuest(): Promise<void> {
+    const guestUsername = 'guest_player';
+    const guestPassword = 'guest123';
+
+    // Check if guest user already exists
+    const existingUser = await ApiClient.getUserProfile();
+    if (existingUser.success && existingUser.profile) {
+      // Already logged in
+      this.currentUser = existingUser.profile;
+      return;
+    }
+
+    // Check if current user is set in localStorage
+    const currentUsername = ApiClient.getCurrentUsername();
+    if (currentUsername) {
+      // Try to load existing user profile
+      await this.loadUserProfile();
+      if (this.currentUser) {
+        return;
+      }
+    }
+
+    // Create or login guest user
+    const result = await ApiClient.login(guestUsername, guestPassword);
+    if (!result.success) {
+      // Guest doesn't exist, create it
+      await ApiClient.register(guestUsername, guestPassword);
+    }
+    await this.loadUserProfile();
+  }
+
+  /**
    * Register a new user
    */
   static async register(username: string, password: string): Promise<{ success: boolean; message: string }> {
